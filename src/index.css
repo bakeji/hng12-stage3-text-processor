@@ -1,1 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Pacifico&display=swap');
 @import "tailwindcss";
+
+@theme{
+  --font-pacifico: 'Pacifico', serif;
+  --font-inter: 'Inter', serif;
+}
+
+@layer base{
+  .custom-gradient, body{
+    background: radial-gradient(52.52% 32.71% at 50% 97.66%, rgba(36, 160, 181, 0.20) 0%, rgba(36, 160, 181, 0.00) 100%), #02191D;
+  }
+}
