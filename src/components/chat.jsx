@@ -1,33 +1,43 @@
 import { useEffect } from "react";
 import { useState } from "react"
+import Spinner from "./spinner";
+import Alert from "./detectoralert";
+import TranslatorAlert from "./translatoralert";
+import SummarizerAlert from "./summarizerAlert";
 
 
-export default function Chat() {
+export default function Chat({ chatArray, setChatArray}) {
     const [Summarize, setSumarize] = useState(false)
+    const [sourceLanguage, setSourceLanguage] = useState('');
     const [detectedLanguage, setDetectedLanguage] = useState('');
     const [isSupported, setIsSupported] = useState(true);
+    const [formError, setFormError] = useState(false);
+    const [error, setError] = useState(false)
+    const [isSummarizeSupported, setIsSummarizeSupported] = useState(true);
     const [translatorIsSupported, setTranslatorIsSupported] = useState(true);
     const [detector, setDetector] = useState(null);
+    const [responeLoading, setResponseLoading] = useState(false);
     const [translator, setTranslator] = useState(null);
+    const [summarizer, setSummarizer] = useState(null);
+    const [charCount, setCharCount] = useState(0);
     const [formData, setFormData] =useState({
         text : "",
         language: ""
     })
-    const [chatArray, setChatArray] = useState([])
+   
 
     function handleChange(e){
     const { name, value } = e.target;
+    setCharCount(value.length);
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
     }
 
+    const isFormEmpty = Object.values(formData).some(value => !value);
 
 
-    function summarizeBtn(){
-        setSumarize(prev => !prev)
-    }
 
 
     // initialize language detector
@@ -52,18 +62,55 @@ export default function Chat() {
             if (canTranslate === 'readily') {
                 console.log('Translation is readily available.');
                 setTranslatorIsSupported(true);
-
+                if(sourceLanguage && formData.language){
+                    const translatorInstance = await self.ai.translator.create({
+                        sourceLanguage: sourceLanguage,
+                        targetLanguage: formData.language,
+                    });
+                    console.log(translatorInstance);
+                    
+                    setTranslator(translatorInstance);
+                
             }
+        }
             else{
                 setTranslatorIsSupported(false)
             }
         }
 
+        //  initialize summarizer
+        const initializeSummarizer = async () => {
+            const summarizerCapabilities = await self.ai.summarizer.capabilities()
+            const canSummarize = summarizerCapabilities.available; 
+            
+            if(canSummarize === 'readily' ){
+                setIsSummarizeSupported(true);
+                    const options = {
+                        sharedContext: '',
+                        type: 'key-points',
+                        format: 'plain-text',
+                        length: 'medium',
+                      };
+                      const summarizeInstance = await self.ai.summarizer.create(options)
+                      setSummarizer(summarizeInstance)
+                      console.log(summarizer)
+
+                console.log('Summarization is readily available.');
+            } 
+            else{
+                setIsSummarizeSupported(false);
+            }
+        }
+
+
+
     useEffect(() => {
-        
         initializeDetector();
-        initializeTranslator();
     },[])
+
+    useEffect(()=>{
+        initializeTranslator();
+    },[sourceLanguage, formData.language])
 
 //  convert language code to language name
     const languageTagToHumanReadable = (languageTag, targetLanguage) => {
@@ -71,68 +118,131 @@ export default function Chat() {
         return displayNames.of(languageTag);
       };
 
-
-
-    function sendMessageBtn(){
-        if(formData.text.trim()){
-            const newChat={
-                id:Date.now(),
-                userChat: formData.text,
-                response: formData.text,
-                Summarize: false
+   // summarize button
+    function summarizeBtn(id){
+        initializeSummarizer();
+        if(summarizer){
+            const summaryText = summarizer.summarize(chatArray[id].response);
+            console.log(summaryText)
             }
-            setChatArray([...chatArray, newChat])
-            setFormData({
-                ...formData,
-                text: "",
-                language: ""
-            })
-// language detection
-            if (detector) {
-                detector.detect(formData.text.trim())
-                  .then((detectedLang) => {
-                    const languageCode = detectedLang[0]?.detectedLanguage;
-                    const languageName = languageTagToHumanReadable(languageCode, 'en');
-                    setDetectedLanguage(languageName)
-                  })
-                  .catch((error) => {
-                    console.error("Error detecting language:", error);
-                  });
-              }
-              
-            
-        }
-        
+    }  
+
+
+// send button
+const sendMessageBtn = async () => {
+    if (!formData.text.trim() || !formData.language) {
+        setFormError(true);
+        return; 
     }
+    setFormError(false);
+
+    const chatId = Date.now();
+    const newChat = {
+        id: chatId,
+        userChat: formData.text,
+    };
+
+    setChatArray([...chatArray, newChat]);
+    setResponseLoading(true);
+
+    try {
+        // First detect language
+        if (detector) {
+            const detectedLang = await detector.detect(formData.text.trim());
+            const languageCode = detectedLang[0]?.detectedLanguage;
+            setSourceLanguage(languageCode);
+
+            const languageName = languageTagToHumanReadable(languageCode, "en");
+            setDetectedLanguage(languageName);
+
+            const translatorInstance = await self.ai.translator.create({
+                sourceLanguage: languageCode,
+                targetLanguage: formData.language,
+            });
+
+            const translatedText = await translatorInstance.translate(formData.text.trim());
+            setResponseLoading(false);
+
+            setChatArray(prev => prev.map(chat => {
+                if (chat.id === chatId) {
+                    return {
+                        ...chat,
+                        language: languageName,
+                        response: translatedText,
+                        
+                    };
+                }
+                return chat;
+            }));
+        }
+    } catch (error) {
+        setChatArray(prev => prev.map(chat => {
+            if (chat.id === chatId) {
+                return {
+                    ...chat,
+                    response:{error}
+                };
+            }
+            return chat;
+        }));
+    } finally {
+        setResponseLoading(false);
+        setFormData({ text: "", language: "" });
+    }
+};
+
+                
+              
+
+
+    
+
 
   
  
     return(
-        <div className=" w-[80%] flex p-10 flex-col items-start  gap-3 h-[100%]">
-                <div className="flex flex-col items-center justify-between w-[100%] gap-1.5 h-[70%] pb-4 overflow-y-scroll">
-                {chatArray.map((text, id)=>(
-                 <div key={id} className="flex flex-col h-[180px]  w-[100%] justify-center gap-2">
-                <div>
-                    <div className="flex flex-col w-[60%] rounded-[8px] p-[20px] ml-[auto] bg-[#335CFF] text-white justify-end items-center bg-[]">
-                    <p className="font-inter font-[400] text-[14px] text-start">{text.userChat}</p>      
-                    </div>
-               
-                    <div className="flex justify-end bg-grey text-[14px] font-inter font-[400]"> <p>{detectedLanguage} </p></div>
-                </div>
+        <div className=" w-[80%] flex p-10 flex-col h-screen items-start  gap-3">
+            <div className="flex-1 w-[100%] overflow-y-auto p-10">
+                {!isSupported &&<Alert/>}
+                {!translatorIsSupported && <TranslatorAlert/>}
+                {!isSummarizeSupported && <SummarizerAlert/>}
+            <div className="w-4/5 mx-auto">
+            <div className="flex flex-col items-center  justify-center w-[100%] gap-1.5 pb-1 ">
+            {chatArray.length>0? chatArray.map((text, id)=>(
 
-                <div className="flex w-[60%] rounded-[8px] p-[20px] bg-[#4d5355] text-white justify-start items-center">
-                    <p>{text.response}</p>
-                </div>
-            </div>
-             ))}
-             </div>
-
-          {chatArray.length<1 && <div className="flex flex-col w-[100%] items-center justify-center">
-                <h1 className="font-pacifico font-[500] text-[64px] text-center"> Hello, welcome to Translate.ai</h1>
-                <p className=" font-inter text-[16px] font-[400]">write something in the box and let us translate it for you.</p>
-            </div>}
+                <div key={id} className="flex flex-col  w-[100%] justify-center gap-2">
+                        <div>
+                            <div className="flex flex-col w-[60%] rounded-[8px] p-[20px] ml-[auto] bg-[#335CFF] text-white justify-end items-center bg-[]">
+                                <p className="font-inter font-[400] text-[14px] text-start">{text.userChat}</p>      
+                            </div>
                     
-            <div className="flex w-[70%] fixed bg-white mx-auto left-0 right-0 justify-center  shadow-2xl   rounded-[12px] flex-col border-[#CBD5E0] border-[1px] p-3 bottom-0 items-center mt-[20px] gap-2">
+                            <div className="flex justify-end bg-grey text-[14px] font-inter font-[400]"> 
+                            {charCount>=150 && text.language ===English && <button onClick={summarizeBtn(id)} className={ "bg-[#335CFF] text-white cursor-pointer w-[120px] h-[40px] font-inter text-[14px] font-[500] rounded-[8px]"}>Summarize</button> }
+                                <p>{text.language} </p>
+                            </div>
+                        </div>
+                       
+                        <div className="flex w-[60%] rounded-[8px] p-[20px] bg-[#4d5355] text-white justify-start items-center">
+                        {responeLoading? <Spinner /> : <p>{text.response}</p>}
+                        </div>
+              
+                </div>
+                
+                ))
+                :
+                chatArray.length<1 && <div className="flex flex-col w-[100%] items-center justify-center">
+                <h1 className="font-pacifico font-[500] text-[54px] text-center"> Hello, welcome to Translate.ai</h1>
+                <p className=" font-inter text-[16px] font-[400]">write something in the box and let us translate it for you.</p>
+                    </div>
+                    }
+                
+            </div>
+            </div>
+            </div>
+
+        
+                    
+            <div className="flex w-[70%]   bg-white mx-auto left-0 right-0 shadow-2xl rounded-[12px] flex-col border-[#CBD5E0] border-[1px] p-3 bottom-0 items-center mt-[20px] gap-2">
                 <div className=" w-[100%]  ">
                     <textarea className="w-[100%] outline-none resize-none h-[80px] text-[14px] font-400 font-inter"  
                     name="text"
@@ -141,11 +251,11 @@ export default function Chat() {
                     id="text" 
                     placeholder="type the text you want to translate"></textarea>
                 </div>
+               
                 <div className="flex items-center w-[90%] justify-between">
                     <div className="flex gap-4" >
-                    <button onClick={summarizeBtn} className={` ${Summarize? "bg-[#335CFF]" : "bg-[#b1bce9]" } cursor-pointer w-[120px] h-[40px] font-inter text-[14px] font-[500] rounded-[8px]`}>Summarize</button>
                         <select
-                         className="border-[2px] border-[#335CFF] outline-none text-[14px] font-[400] font-inter rounded-[8px]"
+                         className="border-[2px] h-[40px] border-[#335CFF] outline-none text-[14px] font-[400] font-inter rounded-[8px]"
                           name="language"
                           value={formData.language}
                           onChange={handleChange}
@@ -159,7 +269,10 @@ export default function Chat() {
                             <option value="es">Spanish</option>
                         </select>
                     </div>
-                    <button onClick={sendMessageBtn} className="w-[60px] cursor-pointer h-[60px] flex justify-center items-center  bg-[#335CFF] rounded-[8px]"><img src="/send.png" alt="send" /></button>
+                    <button onClick={sendMessageBtn} className={`w-[60px] cursor-pointer h-[50px] flex justify-center items-center  bg-[#335CFF] rounded-[8px] `}><img src="/send.png" alt="send" /></button>
+                </div>
+                <div>
+                {formError && <p className="text-red-500 text-[14px] font-inter font-[400]">Please enter text and select language to translate</p>}
                 </div>
             </div>
         </div>
