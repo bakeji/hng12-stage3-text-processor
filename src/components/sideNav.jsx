@@ -14,7 +14,7 @@ function newChat(){
 
             </div>
 
-            <button onClick={newChat} className="mt-[20px] w-[100%] max-md:w-[180px] bg-[#335CFF] text-white rounded-[8px] h-[32px] font-inter text-[14px] font-[500] max-md:mt-0 "> New chat</button>
+            <button onClick={newChat} className="mt-[20px] w-[60%] max-md:w-[180px] bg-[#335CFF] text-white rounded-[8px] h-[32px] font-inter text-[14px] font-[500] max-md:mt-0 "> New chat</button>
 
 
         </div>
