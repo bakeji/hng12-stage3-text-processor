@@ -34,7 +34,6 @@ export default function Chat({ chatArray, setChatArray}) {
       [name]: value,
     }));
     }
-
     const isFormEmpty = Object.values(formData).some(value => !value);
 
 
@@ -60,14 +59,12 @@ export default function Chat({ chatArray, setChatArray}) {
             const translatorCapabilities= await self.ai.translator.capabilities();
             const canTranslate = translatorCapabilities.available;
             if (canTranslate === 'readily') {
-                console.log('Translation is readily available.');
                 setTranslatorIsSupported(true);
                 if(sourceLanguage && formData.language){
                     const translatorInstance = await self.ai.translator.create({
                         sourceLanguage: sourceLanguage,
                         targetLanguage: formData.language,
                     });
-                    console.log(translatorInstance);
                     
                     setTranslator(translatorInstance);
                 
@@ -93,9 +90,6 @@ export default function Chat({ chatArray, setChatArray}) {
                       };
                       const summarizeInstance = await self.ai.summarizer.create(options)
                       setSummarizer(summarizeInstance)
-                      console.log(summarizer)
-
-                console.log('Summarization is readily available.');
             } 
             else{
                 setIsSummarizeSupported(false);
@@ -201,23 +195,23 @@ const sendMessageBtn = async () => {
   
  
     return(
-        <div className=" w-[80%] flex p-10 flex-col h-screen items-start  gap-3">
-            <div className="flex-1 w-[100%] overflow-y-auto p-10">
+        <div className=" w-[80%] flex p-10 flex-col h-screen items-start max-md:w-[100%]  gap-3 ">
+            <div className="flex-1 w-[100%] overflow-y-auto p-10 max-md:flex max-md:p-0">
                 {!isSupported &&<Alert/>}
                 {!translatorIsSupported && <TranslatorAlert/>}
                 {!isSummarizeSupported && <SummarizerAlert/>}
-            <div className="w-4/5 mx-auto">
+            <div className="w-4/5 mx-auto max-lg:w-[85%] max-md:w-[90%]">
             <div className="flex flex-col items-center  justify-center w-[100%] gap-1.5 pb-1 ">
             {chatArray.length>0? chatArray.map((text, id)=>(
 
                 <div key={id} className="flex flex-col  w-[100%] justify-center gap-2">
                         <div>
-                            <div className="flex flex-col w-[60%] rounded-[8px] p-[20px] ml-[auto] bg-[#335CFF] text-white justify-end items-center bg-[]">
+                            <div className="flex flex-col w-[60%] rounded-[8px] p-[20px] ml-[auto] bg-[#335CFF] text-white justify-end items-center ">
                                 <p className="font-inter font-[400] text-[14px] text-start">{text.userChat}</p>      
                             </div>
                     
                             <div className="flex justify-end bg-grey text-[14px] font-inter font-[400]"> 
-                            {charCount>=150 && text.language ===English && <button onClick={summarizeBtn(id)} className={ "bg-[#335CFF] text-white cursor-pointer w-[120px] h-[40px] font-inter text-[14px] font-[500] rounded-[8px]"}>Summarize</button> }
+                            {charCount>=150 && text.language ==="English" && <button onClick={summarizeBtn(id)} className={ "bg-[#335CFF] text-white cursor-pointer w-[120px] h-[40px] font-inter text-[14px] font-[500] rounded-[8px]"}>Summarize</button> }
                                 <p>{text.language} </p>
                             </div>
                         </div>
@@ -231,8 +225,8 @@ const sendMessageBtn = async () => {
                 ))
                 :
                 chatArray.length<1 && <div className="flex flex-col w-[100%] items-center justify-center">
-                <h1 className="font-pacifico font-[500] text-[54px] text-center"> Hello, welcome to Translate.ai</h1>
-                <p className=" font-inter text-[16px] font-[400]">write something in the box and let us translate it for you.</p>
+                <h1 className="font-pacifico font-[500] text-[54px] max-lg:text-[40px] text-center"> Hello, welcome to Translate.ai</h1>
+                <p className=" font-inter text-[16px] text-center font-[400]">write something in the box and let us translate it for you.</p>
                     </div>
                     }
                 
@@ -242,7 +236,7 @@ const sendMessageBtn = async () => {
 
         
                     
-            <div className="flex w-[70%]   bg-white mx-auto left-0 right-0 shadow-2xl rounded-[12px] flex-col border-[#CBD5E0] border-[1px] p-3 bottom-0 items-center mt-[20px] gap-2">
+            <div className="flex w-[70%] max-lg:w-[80%] max-md:w-[100%] bg-white mx-auto left-0 right-0 shadow-2xl rounded-[12px] flex-col border-[#CBD5E0] border-[1px] p-3 bottom-0 items-center mt-[20px] gap-2 ">
                 <div className=" w-[100%]  ">
                     <textarea className="w-[100%] outline-none resize-none h-[80px] text-[14px] font-400 font-inter"  
                     name="text"
@@ -252,7 +246,7 @@ const sendMessageBtn = async () => {
                     placeholder="type the text you want to translate"></textarea>
                 </div>
                
-                <div className="flex items-center w-[90%] justify-between">
+                <div className="flex items-center w-[90%] max-md:w-[95%] justify-between">
                     <div className="flex gap-4" >
                         <select
                          className="border-[2px] h-[40px] border-[#335CFF] outline-none text-[14px] font-[400] font-inter rounded-[8px]"
@@ -260,7 +254,7 @@ const sendMessageBtn = async () => {
                           value={formData.language}
                           onChange={handleChange}
                            id="language">
-                            <option value="">Select tanslation language</option>
+                            <option value="">Select language</option>
                             <option value="en">English</option>
                             <option value="fr">French</option>
                             <option value="pt">Portuguese</option>

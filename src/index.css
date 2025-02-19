@@ -4,10 +4,16 @@
 @theme{
   --font-pacifico: 'Pacifico', serif;
   --font-inter: 'Inter', serif;
+  --breakpoint-2x:  1535px;
+  --breakpoint-xl: 1279px;
+ --breakpoint-lg: 1024px;
+ --breakpoint-md: 768px;
+ --breakpoint-sm: 639px;
+ --breakpoint-xs: 475px;
 }
 
 @layer base{
-  .custom-gradient, body{
-    background: radial-gradient(52.52% 32.71% at 50% 97.66%, rgba(36, 160, 181, 0.20) 0%, rgba(36, 160, 181, 0.00) 100%), #02191D;
-  }
+ body, .root{
+  background-color: #F5F7FA;
+ }
 }
