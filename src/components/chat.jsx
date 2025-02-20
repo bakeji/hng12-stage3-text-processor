@@ -3,23 +3,18 @@ import { useState } from "react"
 import Spinner from "./spinner";
 import Alert from "./detectoralert";
 import TranslatorAlert from "./translatoralert";
-import SummarizerAlert from "./summarizerAlert";
 
 
 export default function Chat({ chatArray, setChatArray}) {
-    const [Summarize, setSumarize] = useState(false)
     const [sourceLanguage, setSourceLanguage] = useState('');
     const [detectedLanguage, setDetectedLanguage] = useState('');
     const [isSupported, setIsSupported] = useState(true);
     const [formError, setFormError] = useState(false);
     const [error, setError] = useState(false)
-    const [isSummarizeSupported, setIsSummarizeSupported] = useState(true);
     const [translatorIsSupported, setTranslatorIsSupported] = useState(true);
     const [detector, setDetector] = useState(null);
-    const [responeLoading, setResponseLoading] = useState(false);
+    const [responeLoading, setResponseLoading] = useState({});
     const [translator, setTranslator] = useState(null);
-    const [summarizer, setSummarizer] = useState(null);
-    const [charCount, setCharCount] = useState(0);
     const [formData, setFormData] =useState({
         text : "",
         language: ""
@@ -34,7 +29,6 @@ export default function Chat({ chatArray, setChatArray}) {
       [name]: value,
     }));
     }
-    const isFormEmpty = Object.values(formData).some(value => !value);
 
 
 
@@ -75,29 +69,6 @@ export default function Chat({ chatArray, setChatArray}) {
             }
         }
 
-        //  initialize summarizer
-        const initializeSummarizer = async () => {
-            const summarizerCapabilities = await self.ai.summarizer.capabilities()
-            const canSummarize = summarizerCapabilities.available; 
-            
-            if(canSummarize === 'readily' ){
-                setIsSummarizeSupported(true);
-                    const options = {
-                        sharedContext: '',
-                        type: 'key-points',
-                        format: 'plain-text',
-                        length: 'medium',
-                      };
-                      const summarizeInstance = await self.ai.summarizer.create(options)
-                      setSummarizer(summarizeInstance)
-            } 
-            else{
-                setIsSummarizeSupported(false);
-            }
-        }
-
-
-
     useEffect(() => {
         initializeDetector();
     },[])
@@ -112,14 +83,6 @@ export default function Chat({ chatArray, setChatArray}) {
         return displayNames.of(languageTag);
       };
 
-   // summarize button
-    function summarizeBtn(id){
-        initializeSummarizer();
-        if(summarizer){
-            const summaryText = summarizer.summarize(chatArray[id].response);
-            console.log(summaryText)
-            }
-    }  
 
 
 // send button
@@ -137,10 +100,15 @@ const sendMessageBtn = async () => {
     };
 
     setChatArray([...chatArray, newChat]);
-    setResponseLoading(true);
+    setResponseLoading(prev => ({ ...prev, [chatId]: true }));
 
     try {
-        // First detect language
+
+        if (!detector) {
+            throw new Error("Language detector not initialized");
+        }
+
+    
         if (detector) {
             const detectedLang = await detector.detect(formData.text.trim());
             const languageCode = detectedLang[0]?.detectedLanguage;
@@ -155,7 +123,7 @@ const sendMessageBtn = async () => {
             });
 
             const translatedText = await translatorInstance.translate(formData.text.trim());
-            setResponseLoading(false);
+            setResponseLoading(prev => ({ ...prev, [chatId]: false }));;
 
             setChatArray(prev => prev.map(chat => {
                 if (chat.id === chatId) {
@@ -174,7 +142,8 @@ const sendMessageBtn = async () => {
             if (chat.id === chatId) {
                 return {
                     ...chat,
-                    response:{error}
+                    language: "Error",
+                    response: `Translation failed: ${error.message || "Please try again later"}`
                 };
             }
             return chat;
@@ -190,7 +159,6 @@ const sendMessageBtn = async () => {
             <div className="flex-1 w-[100%] overflow-y-auto p-10 max-md:flex max-md:p-0">
                 {!isSupported &&<Alert/>}
                 {!translatorIsSupported && <TranslatorAlert/>}
-                {!isSummarizeSupported && <SummarizerAlert/>}
             <div className="w-4/5 mx-auto max-lg:w-[85%] max-md:w-[90%]">
             <div className="flex flex-col items-center  justify-center w-[100%] gap-1.5 pb-1 ">
             {chatArray.length>0? chatArray.map((text, id)=>(
@@ -202,13 +170,12 @@ const sendMessageBtn = async () => {
                             </div>
                     
                             <div className="flex justify-end bg-grey text-[14px] font-inter font-[400]"> 
-                            {charCount>=150 && text.language ==="English" && <button onClick={summarizeBtn(id)} className={ "bg-[#335CFF] text-white cursor-pointer w-[120px] h-[40px] font-inter text-[14px] font-[500] rounded-[8px]"}>Summarize</button> }
                                 <p>{text.language} </p>
                             </div>
                         </div>
                        
                         <div className="flex w-[60%] rounded-[8px] p-[20px] bg-[#4d5355] text-white justify-start items-center">
-                        {responeLoading? <Spinner /> : <p>{text.response}</p>}
+                        {responeLoading[text.id]? <Spinner /> : <p>{text.response}</p>}
                         </div>
               
                 </div>
