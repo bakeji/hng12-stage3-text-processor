@@ -169,7 +169,7 @@ const sendMessageBtn = async () => {
                             </div>
                     
                             <div className="flex justify-end mt-[5px] "> 
-                                <p className=" text-[14px] font-inter font-[400]">{`Detected Language: ${text.language}`} </p>
+                              {text.language &&  <p className=" text-[14px] font-inter font-[400]">{`Detected Language: ${text.language}`} </p>}
                             </div>
                         </div>
                        
