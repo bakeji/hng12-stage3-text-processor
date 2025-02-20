@@ -184,18 +184,9 @@ const sendMessageBtn = async () => {
         setFormData({ text: "", language: "" });
     }
 };
-
-                
-              
-
-
-    
-
-
-  
  
     return(
-        <div className=" w-[80%] flex p-10 flex-col h-screen items-start max-md:w-[100%]  gap-3 ">
+        <div className=" w-[80%] max-md:p-[10px] flex p-10 flex-col h-screen items-start max-md:w-[100%]   gap-3 ">
             <div className="flex-1 w-[100%] overflow-y-auto p-10 max-md:flex max-md:p-0">
                 {!isSupported &&<Alert/>}
                 {!translatorIsSupported && <TranslatorAlert/>}
@@ -236,7 +227,7 @@ const sendMessageBtn = async () => {
 
         
                     
-            <div className="flex w-[70%] max-lg:w-[80%] max-md:w-[100%] bg-white mx-auto left-0 right-0 shadow-2xl rounded-[12px] flex-col border-[#CBD5E0] border-[1px] p-3 bottom-0 items-center mt-[20px] gap-2 ">
+            <div className="flex w-[70%] max-lg:w-[80%] max-md:w-[100%] bg-white mx-auto shadow-2xl rounded-[12px] flex-col border-[#CBD5E0] border-[1px] p-3 items-center mt-[20px] gap-2 ">
                 <div className=" w-[100%]  ">
                     <textarea className="w-[100%] outline-none resize-none h-[80px] text-[14px] font-400 font-inter"  
                     name="text"
