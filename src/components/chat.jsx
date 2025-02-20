@@ -3,6 +3,7 @@ import { useState } from "react"
 import Spinner from "./spinner";
 import Alert from "./detectoralert";
 import TranslatorAlert from "./translatoralert";
+import { useRef } from "react";
 
 
 export default function Chat({ chatArray, setChatArray}) {
@@ -15,6 +16,7 @@ export default function Chat({ chatArray, setChatArray}) {
     const [detector, setDetector] = useState(null);
     const [responeLoading, setResponseLoading] = useState({});
     const [translator, setTranslator] = useState(null);
+    const messagesEndRef = useRef(null);
     const [formData, setFormData] =useState({
         text : "",
         language: ""
@@ -29,7 +31,13 @@ export default function Chat({ chatArray, setChatArray}) {
     }));
     }
 
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
+    useEffect(() => {
+        scrollToBottom();
+    }, [chatArray]);
 
 
     // initialize language detector
@@ -116,6 +124,22 @@ const sendMessageBtn = async () => {
             const languageName = languageTagToHumanReadable(languageCode, "en");
             setDetectedLanguage(languageName);
 
+            if (languageCode === formData.language) {
+                setChatArray(prev => prev.map(chat => {
+                    if (chat.id === chatId) {
+                        return {
+                            ...chat,
+                            language: languageName, 
+                            response: "Text is already in the target language. No translation needed.",
+                            isError: true
+                        };
+                    }
+                    return chat;
+                }));
+                setResponseLoading(prev => ({ ...prev, [chatId]: false }));
+                return;
+            }
+
             const translatorInstance = await self.ai.translator.create({
                 sourceLanguage: languageCode,
                 targetLanguage: formData.language,
@@ -131,6 +155,7 @@ const sendMessageBtn = async () => {
                         language: languageName,
                         response: translatedText,
                         
+                        
                     };
                 }
                 return chat;
@@ -142,7 +167,8 @@ const sendMessageBtn = async () => {
                 return {
                     ...chat,
                     language: "Error",
-                    response: `Translation failed: ${error.message || "Please try again later"}`
+                    response: `Translation failed: ${error.message || "Please try again later"}`,
+                    isError: true
                 };
             }
             return chat;
@@ -174,7 +200,7 @@ const sendMessageBtn = async () => {
                         </div>
                        
                         <div className="flex w-[60%] rounded-[8px] p-[20px] bg-[#4d5355] text-white justify-start items-center">
-                        {responeLoading[text.id]? <Spinner /> : <p>{text.response}</p>}
+                        {responeLoading[text.id]? <Spinner /> : <p className={text.isError? "text-red-400 font-extrabold": ""}>{text.response}</p>}
                         </div>
               
                 </div>
@@ -186,8 +212,8 @@ const sendMessageBtn = async () => {
                 <p className=" font-inter text-[16px] text-center font-[400]">write something in the box and let us translate it for you.</p>
                     </div>
                     }
-                
-            </div>
+                <div ref={messagesEndRef}></div>
+            </div >
             </div>
             </div>
 
