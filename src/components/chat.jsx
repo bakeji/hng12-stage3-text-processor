@@ -23,7 +23,6 @@ export default function Chat({ chatArray, setChatArray}) {
 
     function handleChange(e){
     const { name, value } = e.target;
-    setCharCount(value.length);
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -169,8 +168,8 @@ const sendMessageBtn = async () => {
                                 <p className="font-inter font-[400] text-[14px] text-start">{text.userChat}</p>      
                             </div>
                     
-                            <div className="flex justify-end bg-grey text-[14px] font-inter font-[400]"> 
-                                <p>{text.language} </p>
+                            <div className="flex justify-end mt-[5px] "> 
+                                <p className=" text-[14px] font-inter font-[400]">{`Detected Language: ${text.language}`} </p>
                             </div>
                         </div>
                        
