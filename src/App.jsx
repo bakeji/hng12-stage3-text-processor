@@ -10,14 +10,15 @@ export default function App() {
   const token1 = import.meta.env.VITE_TRANSLATE_API
   const token2 = import.meta.env.VITE_DETECT_API
 
-  function addOriginTrialToken(token) {
-    if (token) {
-      const metaTag = document.createElement("meta");
-      metaTag.httpEquiv = "origin-trial";
-      metaTag.content = token;
-      document.head.appendChild(metaTag);
-    }
-  }
+  // function addOriginTrialToken(token) {
+  //   if (token) {
+  //     const metaTag = document.createElement("meta");
+  //     metaTag.httpEquiv = "origin-trial";
+  //     metaTag.content = token;
+  //     document.head.appendChild(metaTag);
+  //     console.log(metaTag)
+  //   }
+  // }
 
   useEffect(() => {
     const loadSavedChats = async () => {
@@ -32,8 +33,8 @@ export default function App() {
     };
 
     loadSavedChats();
-    addOriginTrialToken(token1);
-    addOriginTrialToken(token2)
+    // addOriginTrialToken(token1);
+    // addOriginTrialToken(token2)
 }, []);
 
 
