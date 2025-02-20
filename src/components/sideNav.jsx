@@ -6,7 +6,7 @@ export default function SideNav({setChatArray}){
 
     return(
 
-        <div className="w-[20%] p-[12px] h-[100%] max-md:h-[fit-content] max-md:flex-row max-md:flex max-md:border-none max-md:w-[90%] max-md:gap-2 items-center justify-between   border-r-[#E0E4EA] border-r-[1px] max-lg:w-[25%]">
+        <div className="w-[20%] p-[12px] h-[100%] max-md:h-[fit-content] max-md:flex-row max-md:flex  max-md:w-[100%] max-md:gap-2 items-center justify-between max-md:border-b-[1px] max-md:border-r-0   border-[#E0E4EA] border-r-[1px] max-lg:w-[25%]">
             
             <div className="flex items-center justify-between w-[100%]"> 
                 <div className="flex items-center justify-center ">
