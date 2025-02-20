@@ -7,6 +7,17 @@ import { useEffect } from "react";
 export default function App() {
 
   const [chatArray, setChatArray] = useState([])
+  const token1 = import.meta.env.VITE_TRANSLATE_API
+  const token2 = import.meta.env.VITE_DETECT_API
+
+  function addOriginTrialToken(token) {
+    if (token) {
+      const metaTag = document.createElement("meta");
+      metaTag.httpEquiv = "origin-trial";
+      metaTag.content = token;
+      document.head.appendChild(metaTag);
+    }
+  }
 
   useEffect(() => {
     const loadSavedChats = async () => {
@@ -21,6 +32,8 @@ export default function App() {
     };
 
     loadSavedChats();
+    addOriginTrialToken(token1);
+    addOriginTrialToken(token2)
 }, []);
 
 
